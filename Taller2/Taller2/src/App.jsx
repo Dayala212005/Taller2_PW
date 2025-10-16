@@ -3,9 +3,15 @@ import { useEffect, useState } from "react";
 function App() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Estados para los filtros
   const [id, setId] = useState("");
   const [status, setStatus] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [gender, setGender] = useState("");
+  const [multiFilters, setMultiFilters] = useState({
+    isActive: "",
+    gender: "",
+  });
 
   const API = "http://localhost:3001";
 
@@ -16,7 +22,6 @@ function App() {
     setBooks(data.data || []);
     setLoading(false);
   };
-
 
   const getBookById = async () => {
     if (!id) return alert("Ingresa un ID para buscar");
@@ -36,6 +41,24 @@ function App() {
     setLoading(false);
   };
 
+  const getBooksByGender = async () => {
+    if (!gender) return alert("Escribe un género para buscar");
+    setLoading(true);
+    const res = await fetch(`${API}/dataInfoQuery?gender=${gender}`);
+    const data = await res.json();
+    setBooks(data.data || []);
+    setLoading(false);
+  };
+
+  const getBooksByMultiFilters = async () => {
+    const params = new URLSearchParams(multiFilters).toString();
+    setLoading(true);
+    const res = await fetch(`${API}/dataInfoQueryMulti?${params}`);
+    const data = await res.json();
+    setBooks(data.data || []);
+    setLoading(false);
+  };
+
   useEffect(() => {
     getAllBooks();
   }, []);
@@ -49,8 +72,8 @@ function App() {
         style={{
           marginBottom: "1.5rem",
           display: "flex",
-          gap: "1rem",
           flexWrap: "wrap",
+          gap: "1rem",
         }}
       >
         {/* Filtro por ID */}
@@ -79,13 +102,52 @@ function App() {
           <button onClick={getBooksByStatus}>Filtrar por estado</button>
         </div>
 
+        {/* Filtro por género */}
+        <div>
+          <input
+            type="text"
+            placeholder="Buscar por género"
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            style={{ padding: "5px", marginRight: "5px" }}
+          />
+          <button onClick={getBooksByGender}>Filtrar por género</button>
+        </div>
+
+        {/* Filtro múltiple */}
+        <div>
+          <select
+            value={multiFilters.isActive}
+            onChange={(e) =>
+              setMultiFilters({ ...multiFilters, isActive: e.target.value })
+            }
+            style={{ padding: "5px", marginRight: "5px" }}
+          >
+            <option value="">-- Estado --</option>
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+
+          <input
+            type="text"
+            placeholder="Género"
+            value={multiFilters.gender}
+            onChange={(e) =>
+              setMultiFilters({ ...multiFilters, gender: e.target.value })
+            }
+            style={{ padding: "5px", marginRight: "5px" }}
+          />
+
+          <button onClick={getBooksByMultiFilters}>Filtrar múltiple</button>
+        </div>
+
         {/* Mostrar todos */}
         <div>
           <button onClick={getAllBooks}>Mostrar todos</button>
         </div>
       </div>
 
-      {/* === Lista de resultados === */}
+      {/* === Resultados === */}
       {loading ? (
         <p>Cargando datos...</p>
       ) : books.length === 0 ? (
@@ -107,7 +169,7 @@ function App() {
               <th>Imagen</th>
               <th>Género</th>
               <th>Activo</th>
-              <th>Fecha de Publicacion</th>
+              <th>Fecha de Publicación</th>
             </tr>
           </thead>
           <tbody>
@@ -117,7 +179,7 @@ function App() {
                 <td>{b.nameBook}</td>
                 <td>{b.picture}</td>
                 <td>{b.gender}</td>
-                <td>{b.isActive ? "Activo" : "No Activo"}</td>
+                <td>{b.isActive ? "Activo " : "No activo "}</td>
                 <td>{b.datePublish}</td>
               </tr>
             ))}
@@ -128,4 +190,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;
